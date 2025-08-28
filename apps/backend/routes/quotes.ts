@@ -20,10 +20,8 @@ async function quoteRoutes(fastify: FastifyInstance) {
         required: ['proposalNumber']
       }
     },
-    handler: controller.getQuoteByProposalNumber
+    handler: controller.getQuoteByProposalNumber_test
   });
-
-  // Remove or comment out any other route using '/quotes/:proposalNumber'
 }
 
 export default quoteRoutes;

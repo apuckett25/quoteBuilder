@@ -89,6 +89,38 @@ class QuotesController {
     }
   }
 
+  // New Method to get quote by ProposalNumber
+  async getQuoteByProposalNumber_test(
+    request: FastifyRequest<QuoteParams>,
+    reply: FastifyReply
+  ) {
+    try {
+      const quote = await prisma.$queryRaw`
+        SELECT d.ID,
+               d.Name,
+               d.ProposalNumber,
+               d.ContactName,
+               d.ContactEmail,
+               d.QuoteTotal,
+               d.CreatedAt
+               di.Name AS DisciplineName
+               l.Description AS LaborDescription
+               l.TotalHours
+               l.BillRate
+               l.LaborTotalBillable
+        FROM quotes d INNER JOIN
+             QuoteLabors l on d.ID = l.QuoteId INNER JOIN
+             Disciplines di on l.DisciplineId = d.ID
+        WHERE d.ProposalNumber = ${request.params.proposalNumber}
+          AND d.Active = true
+          AND d.IsCurrentRevision = true
+      `;
+    } catch (error) {
+      request.log.error(error);
+      return reply.code(500).send({ error: 'Failed to fetch quote' });
+    }
+  }
+
   // READ single quote by proposal number - Enabled
   async getQuoteByProposalNumber(
     request: FastifyRequest<QuoteParams>,
@@ -97,31 +129,9 @@ class QuotesController {
     try {
       const quote = await prisma.quotes.findFirst({
         where: { 
-          ProposalNumber: request.params.proposalNumber,
-          IsCurrentRevision: true,
-          Active: true
-        },
-        select: {
-          ID: true,
-          ProposalNumber: true,
-          Name: true,
-          QuoteTotal: true,
-          CreatedAt: true,
-          CustomerId: true,
-          ContactName: true,
-          ContactEmail: true,
-          Status: true,
-          // QuoteLabors: {
-          //   select: {
-          //     Id: true,
-          //     QuoteId: true,
-          //     DisciplineId: true,
-          //     Description: true,
-          //     TotalHours: true,
-          //     BillRate: true,
-          //     LaborTotalBillable: true
-          //   }
-          // },
+          ProposalNumber: request.params.proposalNumber
+         ,Active: true
+         ,IsCurrentRevision: true
         },
       });
 

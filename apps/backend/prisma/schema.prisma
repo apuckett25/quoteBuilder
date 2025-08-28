@@ -59,7 +59,6 @@ model quotes {
   Status_OG             Int?
   PerDiemPayRate        Decimal?                  @db.Decimal(18, 2)
   PerDiemBillRate       Decimal?                  @db.Decimal(18, 2)
-  QuoteLabors           QuoteLabors[]
 }
 
 model QuoteDisciplines {
@@ -116,8 +115,6 @@ model QuoteLabors {
   PerDiem_PerEmployee   Boolean                   @default(dbgenerated("CONVERT([bit],(0))"), map: "DF__QuoteLabo__PerDi__6C190EBB")
   CalculatedTotalHours  Boolean                   @default(dbgenerated("CONVERT([bit],(0))"), map: "DF__QuoteLabo__Calcu__6D0D32F4")
   PerDiemMoved          Boolean                   @default(false, map: "DF_QuoteLabors_PerDiemMoved")
-  quotes                quotes?                   @relation(fields: [quotesID], references: [ID])
-  quotesID              String?                   @db.UniqueIdentifier
 }
 
 model QuoteMaterials {

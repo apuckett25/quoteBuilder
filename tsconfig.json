@@ -4,7 +4,7 @@
     "module": "NodeNext",
     "lib": ["ES2022"],
     "moduleResolution": "NodeNext",
-    "rootDir": "backend",
+    "rootDir": "./apps/backend",
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
@@ -19,6 +19,6 @@
     },
     "types": ["node", "jest"]
   },
-  "include": ["backend/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "include": ["./apps/backend/**/*"],
+  "exclude": ["./node_modules", "dist", "**/*.test.ts"]
 }
