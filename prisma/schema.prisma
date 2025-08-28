@@ -1,0 +1,286 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Disciplines {
+  Id          String                    @id(map: "PK_Disciplines") @default(dbgenerated("newid()"), map: "DF_Disciplines_Id") @db.UniqueIdentifier
+  Name        String?                   @db.VarChar(Max)
+  Active      Boolean                   @default(true, map: "DF_Disciplines_Active")
+  CreatedAt   DateTime
+  CreatedBy   String                    @db.UniqueIdentifier
+  EditedAt    DateTime
+  EditedBy    String                    @db.UniqueIdentifier
+  Locked      Boolean                   @default(false, map: "DF_Disciplines_Locked")
+  MyTimestamp Unsupported("timestamp")?
+}
+
+model quotes {
+  ID                    String                    @id(map: "PK_tblQuotes") @default(dbgenerated("newid()"), map: "DF_Quotes_UID") @db.UniqueIdentifier
+  Name                  String?                   @db.VarChar(Max)
+  ProjectManagerID      String?                   @db.UniqueIdentifier
+  RFQReceivedDate       DateTime?                 @db.Date
+  QuoteDueDate          DateTime?                 @db.Date
+  QuoteSubmittedDate    DateTime?                 @db.Date
+  ExpectedStartDate     DateTime?
+  ExpectedEndDate       DateTime?
+  Duration              Int?
+  ProposalNumber        String?                   @db.VarChar(Max)
+  Revision              Int?                      @default(0, map: "DF_Quotes_Revision")
+  IsCurrentRevision     Boolean?                  @default(true, map: "DF_Quotes_IsCurrentRevision")
+  CustomerId            String?                   @db.VarChar(Max)
+  CustomerName          String?                   @db.VarChar(75)
+  ContactId             String?                   @db.VarChar(Max)
+  ContactName           String?                   @db.VarChar(75)
+  ContactEmail          String?                   @db.VarChar(75)
+  LocationId            String?                   @db.VarChar(Max)
+  LocationName          String?                   @db.VarChar(75)
+  Regarding             String?                   @db.VarChar(Max)
+  SOW                   String?                   @db.VarChar(Max)
+  Delivery              String?                   @db.VarChar(Max)
+  Status                Int?
+  QuoteTotal            Decimal?                  @db.Decimal(18, 2)
+  QuoteChainId          String?                   @db.UniqueIdentifier
+  RejectionReasonID     String?                   @db.UniqueIdentifier
+  JobNumber             String?                   @db.VarChar(50)
+  CurrentTermTemplateId String?                   @db.UniqueIdentifier
+  CreatedAt             DateTime?
+  CreatedBy             String?                   @db.UniqueIdentifier
+  EditedAt              DateTime?
+  EditedBy              String?                   @db.UniqueIdentifier
+  Locked                Boolean                   @default(false, map: "DF_Quotes_Locked")
+  Active                Boolean                   @default(true, map: "DF_Quotes_Active")
+  MyTimestamp           Unsupported("timestamp")?
+  Status_OG             Int?
+  PerDiemPayRate        Decimal?                  @db.Decimal(18, 2)
+  PerDiemBillRate       Decimal?                  @db.Decimal(18, 2)
+  QuoteLabors           QuoteLabors[]
+}
+
+model QuoteDisciplines {
+  Id           String                    @id(map: "PK_QuoteDisciplines") @default(dbgenerated("newid()"), map: "DF_QuoteDisciplines_Id") @db.UniqueIdentifier
+  QuoteId      String                    @db.UniqueIdentifier
+  DisciplineId String                    @db.UniqueIdentifier
+  MyTimestamp  Unsupported("timestamp")?
+}
+
+model QuoteChangeOrders {
+  ID              String                    @id(map: "PK_QuoteChangeOrders") @default(dbgenerated("newid()"), map: "DF_QuoteChangeOrders_ID") @db.UniqueIdentifier
+  QuoteID         String                    @db.UniqueIdentifier
+  Order           Int                       @default(autoincrement())
+  ChangeOrderName String                    @db.VarChar(100)
+  Active          Boolean                   @default(true, map: "DF_QuoteChangeOrders_Active")
+  CreatedAt       DateTime?
+  CreatedBy       String?                   @db.UniqueIdentifier
+  EditedAt        DateTime?
+  EditedBy        String?                   @db.UniqueIdentifier
+  Locked          Boolean                   @default(false, map: "DF_QuoteChangeOrders_Locked")
+  MyTimestamp     Unsupported("timestamp")?
+}
+
+model QuoteLabors {
+  Id                    String                    @id(map: "PK_QuoteLabors") @default(dbgenerated("newid()"), map: "DF_QuoteLabors_Id") @db.UniqueIdentifier
+  Order                 Int
+  QuoteId               String                    @db.UniqueIdentifier
+  DisciplineId          String                    @db.UniqueIdentifier
+  QuoteChangeOrderID    String?                   @db.UniqueIdentifier
+  SkillId               String                    @db.UniqueIdentifier
+  Description           String?                   @db.VarChar(Max)
+  TotalHours            Int
+  BillRate              Float                     @db.Money
+  LaborTotalBillable    Float?                    @db.Money
+  LaborRateMarkup       Decimal?                  @default(0.34, map: "DF_QuoteLabors_LaborRateMarkup") @db.Decimal(18, 2)
+  Active                Boolean                   @default(true, map: "DF_QuoteLabors_Active")
+  CreatedAt             DateTime
+  CreatedBy             String                    @db.UniqueIdentifier
+  EditedAt              DateTime
+  EditedBy              String                    @db.UniqueIdentifier
+  Locked                Boolean                   @default(false, map: "DF_QuoteLabors_Locked")
+  MyTimestamp           Unsupported("timestamp")?
+  IncludesPerDiem       Boolean
+  NumEmployees          Int
+  NumHoursPer           Int
+  NumWeeks              Int
+  Labor_TotalBillable   Float                     @db.Money
+  TotalBillable         Float                     @default(0, map: "DF_QuoteLabors_TotalBillable") @db.Money
+  PerDiem_TotalDays     Int
+  PerDiem_DailyCost     Float                     @db.Money
+  PerDiem_DailyBillable Float                     @db.Money
+  PerDiem_TotalCost     Float                     @db.Money
+  PerDiem_TotalBillable Float                     @db.Money
+  PerDiem_PerEmployee   Boolean                   @default(dbgenerated("CONVERT([bit],(0))"), map: "DF__QuoteLabo__PerDi__6C190EBB")
+  CalculatedTotalHours  Boolean                   @default(dbgenerated("CONVERT([bit],(0))"), map: "DF__QuoteLabo__Calcu__6D0D32F4")
+  PerDiemMoved          Boolean                   @default(false, map: "DF_QuoteLabors_PerDiemMoved")
+  quotes                quotes?                   @relation(fields: [quotesID], references: [ID])
+  quotesID              String?                   @db.UniqueIdentifier
+}
+
+model QuoteMaterials {
+  Id                 String                    @id(map: "PK_QuoteMaterials") @default(dbgenerated("newid()"), map: "DF_QuoteMaterials_Id") @db.UniqueIdentifier
+  Order              Int
+  QuoteId            String                    @db.UniqueIdentifier
+  DisciplineId       String                    @db.UniqueIdentifier
+  QuoteChangeOrderID String?                   @db.UniqueIdentifier
+  Description        String?                   @db.VarChar(Max)
+  Cost               Float                     @db.Money
+  Markup             Decimal                   @db.Decimal(18, 2)
+  Billable           Float                     @db.Money
+  Active             Boolean                   @default(true, map: "DF_QuoteMaterials_Active")
+  CreatedAt          DateTime
+  CreatedBy          String                    @db.UniqueIdentifier
+  EditedAt           DateTime
+  EditedBy           String                    @db.UniqueIdentifier
+  Locked             Boolean                   @default(false, map: "DF_QuoteMaterials_Locked")
+  MyTimestamp        Unsupported("timestamp")?
+}
+
+model QuoteNotes {
+  Id           String                    @id(map: "PK_QuoteNotes") @default(dbgenerated("newid()"), map: "DF_QuoteNotes_Id") @db.UniqueIdentifier
+  QuoteId      String?                   @db.UniqueIdentifier
+  DisciplineId String?                   @db.UniqueIdentifier
+  NoteSubject  String?                   @db.VarChar(50)
+  Note         String?                   @db.VarChar(Max)
+  CreatedAt    DateTime
+  CreatedBy    String                    @db.UniqueIdentifier
+  EditedAt     DateTime
+  EditedBy     String                    @db.UniqueIdentifier
+  Locked       Boolean                   @default(false, map: "DF_QuoteNotes_Locked")
+  Active       Boolean?                  @default(true, map: "DF_QuoteNotes_Active")
+  MyTimestamp  Unsupported("timestamp")?
+}
+
+model QuoteOthers {
+  Id                 String                    @id(map: "PK_QuoteOthers") @default(dbgenerated("newid()"), map: "DF_QuoteOthers_Id") @db.UniqueIdentifier
+  Order              Int
+  QuoteId            String                    @db.UniqueIdentifier
+  DisciplineId       String                    @db.UniqueIdentifier
+  QuoteChangeOrderID String?                   @db.UniqueIdentifier
+  OtherTypeId        String                    @db.UniqueIdentifier
+  Description        String?                   @db.VarChar(Max)
+  Cost               Float                     @db.Money
+  Markup             Float                     @db.Money
+  Billable           Float                     @db.Money
+  Active             Boolean                   @default(true, map: "DF_QuoteOthers_Active")
+  CreatedAt          DateTime
+  CreatedBy          String                    @db.UniqueIdentifier
+  EditedAt           DateTime
+  EditedBy           String                    @db.UniqueIdentifier
+  Locked             Boolean                   @default(false, map: "DF_QuoteOthers_Locked")
+  MyTimestamp        Unsupported("timestamp")?
+}
+
+model QuoteOtherTypes {
+  Id          String                    @id(map: "PK_QuoteOtherTypes") @default(dbgenerated("newid()"), map: "DF_QuoteOtherTypes_Id") @db.UniqueIdentifier
+  Name        String?                   @db.VarChar(Max)
+  Active      Boolean                   @default(true, map: "DF_QuoteOtherTypes_Active")
+  CreatedAt   DateTime
+  CreatedBy   String                    @db.UniqueIdentifier
+  EditedAt    DateTime
+  EditedBy    String                    @db.UniqueIdentifier
+  Locked      Boolean                   @default(false, map: "DF_QuoteOtherTypes_Locked")
+  MyTimestamp Unsupported("timestamp")?
+}
+
+model QuotePaymentTerms {
+  Id          String                    @id(map: "PK_QuotePaymentTerms") @default(dbgenerated("newid()"), map: "DF_QuotePaymentTerms_Id") @db.UniqueIdentifier
+  QuoteId     String                    @db.UniqueIdentifier
+  Percentage  Decimal                   @db.Decimal(18, 2)
+  Milestone   String?                   @db.VarChar(Max)
+  Order       Int
+  TemplateId  String?                   @db.UniqueIdentifier
+  Active      Boolean                   @default(true, map: "DF_QuotePaymentTerms_Active")
+  CreatedAt   DateTime
+  CreatedBy   String                    @db.UniqueIdentifier
+  EditedAt    DateTime
+  EditedBy    String                    @db.UniqueIdentifier
+  Locked      Boolean                   @default(false, map: "DF_QuotePaymentTerms_Locked")
+  MyTimestamp Unsupported("timestamp")?
+}
+
+model QuotePaymentTermTemplates {
+  Id          String                    @id(map: "PK_QuotePaymentTermTemplates") @default(dbgenerated("newid()"), map: "DF_QuotePaymentTermTemplates_Id") @db.UniqueIdentifier
+  Name        String?                   @db.VarChar(Max)
+  Active      Boolean                   @default(true, map: "DF_QuotePaymentTermTemplates_Active")
+  CreatedAt   DateTime
+  CreatedBy   String                    @db.UniqueIdentifier
+  EditedAt    DateTime
+  EditedBy    String                    @db.UniqueIdentifier
+  Locked      Boolean                   @default(false, map: "DF_QuotePaymentTermTemplates_Locked")
+  MyTimestamp Unsupported("timestamp")?
+}
+
+model QuotePerDiems {
+  ID                 String                    @id(map: "PK_QuotePerDiems") @default(dbgenerated("newid()"), map: "DF_QuotePerDiems_ID") @db.UniqueIdentifier
+  Order              Int
+  QuoteId            String                    @db.UniqueIdentifier
+  DisciplineId       String                    @db.UniqueIdentifier
+  QuoteChangeOrderID String?                   @db.UniqueIdentifier
+  NumOfEmployees     Int
+  NumOfDays          Int
+  PerDiemPayRate     Float                     @db.Money
+  PerDiemBillRate    Float                     @db.Money
+  PerDiemPayTotal    Float                     @db.Money
+  PerDiemBillTotal   Float                     @db.Money
+  Active             Boolean                   @default(true, map: "DF_QuotePerDiems_Active")
+  CreatedAt          DateTime
+  CreatedBy          String                    @db.UniqueIdentifier
+  EditedAt           DateTime
+  EditedBy           String                    @db.UniqueIdentifier
+  Locked             Boolean                   @default(false, map: "DF_QuotePerDiems_Locked")
+  MyTimestamp        Unsupported("timestamp")?
+}
+
+model QuoteRejectionReasons {
+  Id          String                    @id(map: "PK_QuoteRejectionReasons") @default(dbgenerated("newid()"), map: "DF_QuoteRejectionReasons_Id") @db.UniqueIdentifier
+  Reason      String?                   @db.VarChar(Max)
+  Active      Boolean                   @default(true, map: "DF_QuoteRejectionReasons_Active")
+  CreatedAt   DateTime
+  CreatedBy   String                    @db.UniqueIdentifier
+  EditedAt    DateTime
+  EditedBy    String                    @db.UniqueIdentifier
+  Locked      Boolean                   @default(false, map: "DF_QuoteRejectionReasons_Locked")
+  MyTimeStamp Unsupported("timestamp")?
+}
+
+model Skills {
+  Id          String                    @id(map: "PK_Skills") @default(dbgenerated("newid()"), map: "DF_Skills_Id") @db.UniqueIdentifier
+  Name        String?                   @db.VarChar(Max)
+  Description String?                   @db.VarChar(Max)
+  Active      Boolean                   @default(true, map: "DF_Skills_Active")
+  CreatedAt   DateTime
+  CreatedBy   String                    @db.UniqueIdentifier
+  EditedAt    DateTime
+  EditedBy    String                    @db.UniqueIdentifier
+  Locked      Boolean                   @default(false, map: "DF_Skills_Locked")
+  MyTimestamp Unsupported("timestamp")?
+}
+
+model tblDBUsers {
+  UserID               Int                       @id(map: "PK_tblDBUsers") @default(autoincrement())
+  ID                   String?                   @default(dbgenerated("newid()"), map: "DF_tblDBUsers_ID") @db.UniqueIdentifier
+  FirstName            String?                   @db.VarChar(50)
+  LastName             String?                   @db.VarChar(50)
+  FirstLastName        String?                   @db.VarChar(101)
+  LastFirstName        String?                   @db.VarChar(102)
+  UserName             String                    @db.VarChar(50)
+  EmployeeNumber       String?                   @db.VarChar(50)
+  WorkTitle            String?                   @db.VarChar(350)
+  Email                String?                   @db.VarChar(75)
+  UserInitials         String?                   @db.VarChar(50)
+  Password             String?                   @db.VarChar(50)
+  IsAdministrator      Boolean                   @default(false, map: "DF_tblDBUsers_IsAdministrator")
+  WritePermission      Boolean                   @default(false, map: "DF_tblDBUsers_WritePermission")
+  Disabled             Boolean                   @default(false, map: "DF_tblDBUsers_Disabled")
+  LimitConnection      Int?
+  AdminRibbon          Boolean?                  @default(false, map: "DF_tblDBUsers_AdminRibbon")
+  AccountingRibbon     Boolean?                  @default(false, map: "DF_tblDBUsers_AccountingRibbon")
+  HRRibbon             Boolean?                  @default(false, map: "DF_tblDBUsers_HRRibbon")
+  ProjectManagerRibbon Boolean?                  @default(false, map: "DF_tblDBUsers_ProjectManagerRibbon")
+  PurchasingRibbon     Boolean?                  @default(false, map: "DF_tblDBUsers_PurchasingRibbon")
+  MyTimeStamp          Unsupported("timestamp")?
+}
