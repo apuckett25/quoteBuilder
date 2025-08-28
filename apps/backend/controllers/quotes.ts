@@ -90,51 +90,51 @@ class QuotesController {
   }
 
   // READ single quote by proposal number - Enabled
-  // async getQuoteByProposalNumber(
-  //   request: FastifyRequest<QuoteParams>,
-  //   reply: FastifyReply
-  // ) {
-  //   try {
-  //     const quote = await prisma.quotes.findFirst({
-  //       where: { 
-  //         ProposalNumber: request.params.proposalNumber,
-  //         IsCurrentRevision: true,
-  //         Active: true
-  //       },
-  //       select: {
-  //         ID: true,
-  //         ProposalNumber: true,
-  //         Name: true,
-  //         QuoteTotal: true,
-  //         CreatedAt: true,
-  //         CustomerId: true,
-  //         ContactName: true,
-  //         ContactEmail: true,
-  //         Status: true,
-  //         QuoteLabors: {
-  //           select: {
-  //             Id: true,
-  //             QuoteId: true,
-  //             DisciplineId: true,
-  //             Description: true,
-  //             TotalHours: true,
-  //             BillRate: true,
-  //             LaborTotalBillable: true
-  //           }
-  //         },
-  //       },
-  //     });
+  async getQuoteByProposalNumber(
+    request: FastifyRequest<QuoteParams>,
+    reply: FastifyReply
+  ) {
+    try {
+      const quote = await prisma.quotes.findFirst({
+        where: { 
+          ProposalNumber: request.params.proposalNumber,
+          IsCurrentRevision: true,
+          Active: true
+        },
+        select: {
+          ID: true,
+          ProposalNumber: true,
+          Name: true,
+          QuoteTotal: true,
+          CreatedAt: true,
+          CustomerId: true,
+          ContactName: true,
+          ContactEmail: true,
+          Status: true,
+          // QuoteLabors: {
+          //   select: {
+          //     Id: true,
+          //     QuoteId: true,
+          //     DisciplineId: true,
+          //     Description: true,
+          //     TotalHours: true,
+          //     BillRate: true,
+          //     LaborTotalBillable: true
+          //   }
+          // },
+        },
+      });
 
-  //     if (!quote) {
-  //       return reply.code(404).send({ error: 'Quote not found' });
-  //     }
+      if (!quote) {
+        return reply.code(404).send({ error: 'Quote not found' });
+      }
 
-  //     return reply.send(quote);
-  //   } catch (error) {
-  //     request.log.error(error);
-  //     return reply.code(500).send({ error: 'Failed to fetch quote' });
-  //   }
-  // }
+      return reply.send(quote);
+    } catch (error) {
+      request.log.error(error);
+      return reply.code(500).send({ error: 'Failed to fetch quote' });
+    }
+  }
 
   async getQuoteLabor(
     request: FastifyRequest<QuoteParams>,

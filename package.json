@@ -2,9 +2,9 @@
   "name": "quote-builder",
   "version": "1.0.0",
   "description": "Project Quote Builder Application",
-  "main": "backend/server.ts",
+  "main": "./apps/backend/server.ts",
   "scripts": {
-    "dev": "nodemon backend/server.ts",
+    "dev": "nodemon ./apps/backend/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
