@@ -199,6 +199,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({ opened, onClose, quoteId, i
               <Table.Th>Cost</Table.Th>
               <Table.Th>Markup</Table.Th>
               <Table.Th>Billable</Table.Th>
+              <Table.Th>Actions</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -228,6 +229,29 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({ opened, onClose, quoteId, i
                   <Text size="sm" fw={600}>
                     {formatCurrency(item.Billable)}
                   </Text>
+                </Table.Td>
+                <Table.Td>
+                  <ActionIcon
+                    variant="light"
+                    color="blue"
+                    // onClick={() => handleEditQuote(quote.ID)}
+                  >
+                    <IconEye size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="light"
+                    color="green"
+                    // onClick={() => handleEditQuote(quote.ID)}
+                  >
+                    <IconEdit size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="light"
+                    color="red"
+                    // onClick={() => handleEditQuote(quote.ID)}
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
                 </Table.Td>
               </Table.Tr>
             ))}
@@ -260,6 +284,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({ opened, onClose, quoteId, i
               <Table.Th>Cost</Table.Th>
               <Table.Th>Markup</Table.Th>
               <Table.Th>Billable</Table.Th>
+              <Table.Th>Actions</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -288,6 +313,29 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({ opened, onClose, quoteId, i
                   <Text size="sm" fw={600}>
                     {formatCurrency(item.Billable)}
                   </Text>
+                </Table.Td>
+                <Table.Td>
+                  <ActionIcon
+                    variant="light"
+                    color="blue"
+                    // onClick={() => handleEditQuote(quote.ID)}
+                  >
+                    <IconEye size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="light"
+                    color="green"
+                    // onClick={() => handleEditQuote(quote.ID)}
+                  >
+                    <IconEdit size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="light"
+                    color="red"
+                    // onClick={() => handleEditQuote(quote.ID)}
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
                 </Table.Td>
               </Table.Tr>
             ))}
@@ -321,6 +369,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({ opened, onClose, quoteId, i
               <Table.Th>Bill Rate</Table.Th>
               <Table.Th>Pay Total</Table.Th>
               <Table.Th>Bill Total</Table.Th>
+              <Table.Th>Actions</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -350,6 +399,29 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({ opened, onClose, quoteId, i
                   <Text size="sm" fw={600}>
                     {formatCurrency(item.PerDiemBillTotal)}
                   </Text>
+                </Table.Td>
+                <Table.Td>
+                  <ActionIcon
+                    variant="light"
+                    color="blue"
+                    // onClick={() => handleEditQuote(quote.ID)}
+                  >
+                    <IconEye size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="light"
+                    color="green"
+                    // onClick={() => handleEditQuote(quote.ID)}
+                  >
+                    <IconEdit size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    variant="light"
+                    color="red"
+                    // onClick={() => handleEditQuote(quote.ID)}
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
                 </Table.Td>
               </Table.Tr>
             ))}
