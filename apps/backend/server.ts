@@ -3,6 +3,8 @@ import cors from '@fastify/cors';
 import swagger from '@fastify/swagger';
 import indexRoutes from './routes';
 import quoteRoutes from './routes/quotes';
+import dotnet from 'dotenv';
+dotnet.config({path: '.env'});
 
 const fastify = Fastify({
   logger: true
