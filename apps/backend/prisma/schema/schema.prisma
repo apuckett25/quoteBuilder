@@ -218,7 +218,7 @@ model Skills {
 
 model tblDBUsers {
   UserID               Int                       @id(map: "PK_tblDBUsers") @default(autoincrement())
-  ID                   String?                   @default(dbgenerated("newid()"), map: "DF_tblDBUsers_ID") @db.UniqueIdentifier
+  ID                   String?                   @unique @default(dbgenerated("newid()"), map: "DF_tblDBUsers_ID") @db.UniqueIdentifier
   FirstName            String?                   @db.VarChar(50)
   LastName             String?                   @db.VarChar(50)
   FirstLastName        String?                   @db.VarChar(101)
@@ -239,6 +239,7 @@ model tblDBUsers {
   ProjectManagerRibbon Boolean?                  @default(false, map: "DF_tblDBUsers_ProjectManagerRibbon")
   PurchasingRibbon     Boolean?                  @default(false, map: "DF_tblDBUsers_PurchasingRibbon")
   MyTimeStamp          Unsupported("timestamp")?
+  ManagedQuotes        Quotes[]                  @relation("ProjectManagerQuotes")
 }
 
 model ApplicationUsers {
@@ -396,6 +397,7 @@ model Quotes {
   Status_OG             Int?
   PerDiemPayRate        Decimal?                  @db.Decimal(18, 2)
   PerDiemBillRate       Decimal?                  @db.Decimal(18, 2)
+  ProjectManager        tblDBUsers?               @relation("ProjectManagerQuotes", fields: [ProjectManagerID], references: [ID])
 }
 
 model sysdiagrams {
