@@ -1,7 +1,7 @@
 import { Container, Title, Paper, Group, Text, Button, Loader } from '@mantine/core';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { fetchQuoteById, type Quote } from '../../utils/api';
+import { getQuoteById, type Quote } from '../../utils/api';
 
 export default function QuoteDetailPage() {
   const router = useRouter();
@@ -14,7 +14,7 @@ export default function QuoteDetailPage() {
     if (id) {
       const loadQuote = async () => {
         try {
-          const data = await fetchQuoteById(id as string);
+          const data = await getQuoteById(id as string);
           setQuote(data);
         } catch (err) {
           setError('Failed to load quote details');
