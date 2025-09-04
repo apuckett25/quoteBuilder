@@ -281,7 +281,7 @@ const QuoteList: React.FC = () => {
                           color: isDark ? 'var(--mantine-color-gray-1)' : 'var(--mantine-color-gray-9)' 
                         }}
                       >
-                        {quote.CustomerName || 'Unknown Customer'}
+                        {quote.CustomerId || quote.CustomerName || 'N/A'}
                       </Text>
                     </Table.Td>
                     <Table.Td>
