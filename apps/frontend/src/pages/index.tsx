@@ -18,7 +18,8 @@ import QuoteList from '../components/QuoteList';
 import { ThemeToggle } from '../components/ThemeToggle';
 
 const MainPage: React.FC = () => {
-  const computedColorScheme = useComputedColorScheme('light');
+  // const computedColorScheme = useComputedColorScheme('light');
+  const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
   const isDark = computedColorScheme === 'dark';
 
   return (

@@ -1,7 +1,7 @@
 // components/ThemeToggle.tsx
-import { ActionIcon, useMantineColorScheme, useComputedColorScheme, Tooltip } from '@mantine/core';
+import { useState, useEffect } from 'react';
+import { ActionIcon, useMantineColorScheme, Tooltip } from '@mantine/core';
 import { IconSun, IconMoon } from '@tabler/icons-react';
-import cx from 'clsx';
 
 interface ThemeToggleProps {
   size?: 'sm' | 'md' | 'lg';
@@ -9,10 +9,20 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ size = 'md', variant = 'default' }: ThemeToggleProps) {
-  const { setColorScheme } = useMantineColorScheme();
-  const computedColorScheme = useComputedColorScheme('light', { getInitialValueInEffect: true });
+  const { colorScheme, setColorScheme } = useMantineColorScheme();
+  const [mounted, setMounted] = useState(false);
 
-  const isDark = computedColorScheme === 'dark';
+  // This effect runs only on the client after the initial render
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = colorScheme === 'dark';
+
+  // If the component is not mounted (i.e., on the server), render a placeholder or null
+  if (!mounted) {
+    return null; // Or <ActionIcon variant={variant} size={size} aria-label="Toggle color scheme" />;
+  }
 
   return (
     <Tooltip label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
