@@ -1,6 +1,7 @@
 // lib/api.ts
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
+// --- INTERFACES (No changes needed) ---
 export interface Quote {
   ID: string;
   Name: string;
@@ -13,7 +14,6 @@ export interface Quote {
   CustomerName: string;
   Status: number;
 }
-
 export interface QuoteListResponse {
   data: Quote[];
   page: number;
@@ -21,7 +21,6 @@ export interface QuoteListResponse {
   total: number;
   totalPages: number;
 }
-
 export interface LaborItem {
   Id: string;
   Order: number;
@@ -46,7 +45,6 @@ export interface LaborItem {
   SkillName: string;
   SkillDescription: string;
 }
-
 export interface MaterialItem {
   Id: string;
   Order: number;
@@ -56,7 +54,6 @@ export interface MaterialItem {
   Billable: number;
   DisciplineName: string;
 }
-
 export interface OtherItem {
   Id: string;
   Order: number;
@@ -67,7 +64,6 @@ export interface OtherItem {
   DisciplineName: string;
   OtherTypeName: string;
 }
-
 export interface PerDiemItem {
   ID: string;
   Order: number;
@@ -79,12 +75,10 @@ export interface PerDiemItem {
   PerDiemBillTotal: number;
   DisciplineName: string;
 }
-
 export interface Discipline {
   Id: string;
   Name: string;
 }
-
 export interface QuoteTotals {
   labor: number;
   materials: number;
@@ -92,7 +86,6 @@ export interface QuoteTotals {
   perDiem: number;
   grandTotal: number;
 }
-
 export interface QuoteDetailsResponse {
   quote: Quote;
   laborItems: LaborItem[];
@@ -102,11 +95,12 @@ export interface QuoteDetailsResponse {
   disciplines: Discipline[];
   totals: QuoteTotals;
 }
-
 export interface QuoteSummaryResponse {
   quote: Quote;
   totals: QuoteTotals;
 }
+
+// --- API CLIENT (Updated with new methods) ---
 
 class ApiClient {
   private baseUrl: string;
@@ -128,9 +122,13 @@ class ApiClient {
       });
 
       if (!response.ok) {
+        // For DELETE requests, a 204 No Content is a success
+        if (response.status === 204 && options?.method === 'DELETE') {
+            return {} as T;
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+      
       return await response.json();
     } catch (error) {
       console.error(`API request failed: ${endpoint}`, error);
@@ -138,54 +136,63 @@ class ApiClient {
     }
   }
 
-  // Get paginated quotes list
+  // --- CREATE ---
+  async createQuote(quoteData: Partial<Quote>): Promise<Quote> {
+    return this.request<Quote>('/quotes', {
+      method: 'POST',
+      body: JSON.stringify(quoteData),
+    });
+  }
+
+  // --- READ ---
   async getQuotes(page: number = 1, pageSize: number = 25): Promise<QuoteListResponse> {
     return this.request<QuoteListResponse>(`/quotes?page=${page}&pageSize=${pageSize}`);
   }
-
-  // Get single quote by ID
   async getQuoteById(id: string): Promise<Quote> {
     return this.request<Quote>(`/quotes/id/${id}`);
   }
-
-  // Get single quote by proposal number
   async getQuoteByProposalNumber(proposalNumber: string): Promise<Quote> {
     return this.request<Quote>(`/quotes/proposal/${proposalNumber}`);
   }
-
-  // Get comprehensive quote details (all tabs data)
   async getQuoteDetails(id: string): Promise<QuoteDetailsResponse> {
     return this.request<QuoteDetailsResponse>(`/quotes/${id}/details`);
   }
-
-  // Get quote summary with totals
   async getQuoteSummary(id: string): Promise<QuoteSummaryResponse> {
     return this.request<QuoteSummaryResponse>(`/quotes/${id}/summary`);
   }
-
-  // Get individual tab data
   async getQuoteLabor(id: string): Promise<LaborItem[]> {
     return this.request<LaborItem[]>(`/quotes/${id}/labor`);
   }
-
   async getQuoteMaterials(id: string): Promise<MaterialItem[]> {
     return this.request<MaterialItem[]>(`/quotes/${id}/materials`);
   }
-
   async getQuoteOthers(id: string): Promise<OtherItem[]> {
     return this.request<OtherItem[]>(`/quotes/${id}/others`);
   }
-
   async getQuotePerDiems(id: string): Promise<PerDiemItem[]> {
     return this.request<PerDiemItem[]>(`/quotes/${id}/perdiems`);
   }
+
+  // --- UPDATE ---
+  async updateQuote(id: string, quoteData: Partial<Quote>): Promise<Quote> {
+    return this.request<Quote>(`/quotes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(quoteData),
+    });
+  }
+
+  // --- DELETE ---
+  async deleteQuote(id: string): Promise<void> {
+    await this.request<void>(`/quotes/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
-// Create singleton instance
 const apiClient = new ApiClient();
 export default apiClient;
 
-// Export individual functions for convenience
+// --- EXPORTS (No changes needed) ---
 export const {
   getQuotes,
   getQuoteById,

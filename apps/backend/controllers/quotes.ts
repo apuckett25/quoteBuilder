@@ -1,8 +1,9 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Quotes } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Interface for URL parameters
 interface QuoteParams {
   Params: {
     id: string;
@@ -10,6 +11,7 @@ interface QuoteParams {
   };
 }
 
+// Interface for pagination query
 interface PaginationQuery {
   Querystring: {
     page?: number;
@@ -17,12 +19,51 @@ interface PaginationQuery {
   };
 }
 
-interface ErrorResponse {
-  error: string;
-  message?: string;
+// Interface for the quote creation request body
+interface CreateQuoteBody {
+  Body: Omit<Quotes, 'ID' | 'CreatedAt' | 'EditedAt' | 'MyTimestamp' | 'ProjectManager'>;
+}
+
+// Interface for the quote update request body
+interface UpdateQuoteBody {
+  Body: Partial<Omit<Quotes, 'ID' | 'CreatedAt' | 'EditedAt' | 'MyTimestamp' | 'ProjectManager'>>;
 }
 
 class QuotesController {
+  // CREATE a new quote - Enabled
+  async createQuote(
+    request: FastifyRequest<CreateQuoteBody>,
+    reply: FastifyReply
+  ) {
+    try {
+      const newQuoteData = request.body;
+      
+      // Create the new quote record
+      const quote = await prisma.quotes.create({
+        data: {
+          ...newQuoteData,
+          Revision: 0,
+          IsCurrentRevision: true,
+          Active: true,
+          CreatedAt: new Date(),
+          EditedAt: new Date(),
+        },
+      });
+
+      // After creation, update the QuoteChainId to match the new quote's ID.
+      // This establishes the start of a revision chain.
+      const finalQuote = await prisma.quotes.update({
+        where: { ID: quote.ID },
+        data: { QuoteChainId: quote.ID },
+      });
+
+      return reply.code(201).send(finalQuote);
+    } catch (error) {
+      request.log.error(error);
+      return reply.code(500).send({ error: 'Failed to create quote' });
+    }
+  }
+  
   // READ all quotes with pagination - Enabled
   async getQuotes(
     request: FastifyRequest<PaginationQuery>,
@@ -35,13 +76,14 @@ class QuotesController {
 
       const [quotes, total] = await Promise.all([
         prisma.quotes.findMany({
+          where: { Active: true }, // Only fetch active quotes
           orderBy: {
             CreatedAt: 'desc'
           },
           skip,
           take: pageSize
         }),
-        prisma.quotes.count()
+        prisma.quotes.count({ where: { Active: true } })
       ]);
 
       return reply.send({
@@ -57,7 +99,7 @@ class QuotesController {
     }
   }
 
-  // READ single quote - Enabled
+  // READ single quote by ID - Enabled
   async getQuoteById(
     request: FastifyRequest<QuoteParams>,
     reply: FastifyReply
@@ -113,6 +155,109 @@ class QuotesController {
       return reply.code(500).send({ error: 'Failed to fetch quote' });
     }
   }
+  
+  // UPDATE a quote by ID - Enabled
+  async updateQuote(
+    request: FastifyRequest<QuoteParams & UpdateQuoteBody>,
+    reply: FastifyReply
+  ) {
+    try {
+      const { id } = request.params;
+      const updateData = request.body;
+
+      const updatedQuote = await prisma.quotes.update({
+        where: { ID: id },
+        data: {
+          ...updateData,
+          EditedAt: new Date(),
+        },
+      });
+
+      return reply.send(updatedQuote);
+    } catch (error) {
+      request.log.error(error);
+      // Handle cases where the quote to update doesn't exist
+      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
+        return reply.code(404).send({ error: 'Quote not found' });
+      }
+      return reply.code(500).send({ error: 'Failed to update quote' });
+    }
+  }
+  
+  // DELETE a quote by ID (Soft Delete) - Enabled
+  async deleteQuote(
+    request: FastifyRequest<QuoteParams>,
+    reply: FastifyReply
+  ) {
+    try {
+      const { id } = request.params;
+
+      // This is a "soft delete". We set the Active flag to false instead of deleting the record.
+      await prisma.quotes.update({
+        where: { ID: id },
+        data: { Active: false },
+      });
+
+      return reply.code(204).send(); // 204 No Content is a standard success response for deletes
+    } catch (error) {
+      request.log.error(error);
+       if (error instanceof Error && 'code' in error && error.code === 'P2025') {
+        return reply.code(404).send({ error: 'Quote not found' });
+      }
+      return reply.code(500).send({ error: 'Failed to delete quote' });
+    }
+  }
+  
+  // CREATE a new revision of a quote - Enabled
+  async createRevision(
+    request: FastifyRequest<QuoteParams>,
+    reply: FastifyReply
+  ) {
+    try {
+      const { id: originalQuoteId } = request.params;
+
+      // Find the original quote to revise
+      const originalQuote = await prisma.quotes.findUnique({
+        where: { ID: originalQuoteId },
+      });
+
+      if (!originalQuote) {
+        return reply.code(404).send({ error: 'Original quote not found' });
+      }
+
+      // Use a transaction to ensure both operations succeed or fail together
+      const [, newRevision] = await prisma.$transaction([
+        // 1. Mark the old quote as no longer the current revision
+        prisma.quotes.update({
+          where: { ID: originalQuoteId },
+          data: { IsCurrentRevision: false },
+        }),
+        // 2. Create the new revision based on the original quote's data
+        prisma.quotes.create({
+          data: {
+            ...originalQuote,
+            ID: undefined, // Let Prisma generate a new ID
+            Revision: (originalQuote.Revision || 0) + 1,
+            IsCurrentRevision: true,
+            CreatedAt: new Date(),
+            EditedAt: new Date(),
+          },
+        }),
+      ]);
+      
+      // Note: This only copies the main quote record. If you need to copy related items
+      // (like labor, materials, etc.), you would need to add logic here to query
+      // those items from the originalQuoteId and create new ones for the newRevision.ID.
+
+      return reply.code(201).send(newRevision);
+    } catch (error) {
+      request.log.error(error);
+      return reply.code(500).send({ error: 'Failed to create quote revision' });
+    }
+  }
+
+  // --- EXISTING READ-ONLY METHODS ---
+  // (The rest of your read-only methods like getQuoteDetails, getQuoteLabor, etc. remain unchanged)
 
   // Get comprehensive quote details with all related data
   async getQuoteDetails(
@@ -481,35 +626,6 @@ class QuotesController {
       request.log.error(error);
       return reply.code(500).send({ error: 'Failed to fetch quote summary' });
     }
-  }
-
-  // Disabled operations will return 403 Forbidden
-  async createQuote(request: FastifyRequest, reply: FastifyReply) {
-    return reply.code(403).send({ 
-      error: 'Operation not permitted',
-      message: 'Quote creation is disabled'
-    });
-  }
-
-  async updateQuote(request: FastifyRequest, reply: FastifyReply) {
-    return reply.code(403).send({ 
-      error: 'Operation not permitted',
-      message: 'Quote updates are disabled'
-    });
-  }
-
-  async deleteQuote(request: FastifyRequest, reply: FastifyReply) {
-    return reply.code(403).send({ 
-      error: 'Operation not permitted',
-      message: 'Quote deletion is disabled'
-    });
-  }
-
-  async createRevision(request: FastifyRequest, reply: FastifyReply) {
-    return reply.code(403).send({ 
-      error: 'Operation not permitted',
-      message: 'Quote revision creation is disabled'
-    });
   }
 }
 

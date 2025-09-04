@@ -17,6 +17,8 @@ import {
   Tooltip,
   useComputedColorScheme
 } from '@mantine/core';
+import { modals } from '@mantine/modals';
+import { notifications } from '@mantine/notifications';
 import { 
   IconEye, 
   IconEdit,
@@ -26,7 +28,8 @@ import {
   IconCalendar,
   IconUser,
   IconMail,
-  IconTrash
+  IconTrash,
+  IconPlus
 } from '@tabler/icons-react';
 import { useDebouncedValue } from '@mantine/hooks';
 import apiClient, { Quote, QuoteListResponse } from '../utils/api';
@@ -44,12 +47,10 @@ const QuoteList: React.FC = () => {
   const [totalQuotes, setTotalQuotes] = useState(0);
   const [pageSize] = useState(25);
   
-  // Modal state
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
   const [modalOpened, setModalOpened] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchQuery, 300);
 
@@ -68,7 +69,6 @@ const QuoteList: React.FC = () => {
       setTotalQuotes(response.total);
     } catch (err) {
       setError('Failed to load quotes. Please try again.');
-      console.error('Error fetching quotes:', err);
     } finally {
       setLoading(false);
     }
@@ -76,20 +76,66 @@ const QuoteList: React.FC = () => {
 
   const handleViewQuote = (quoteId: string) => {
     setSelectedQuoteId(quoteId);
-    setModalOpened(true);
     setIsEditing(false);
+    setModalOpened(true);
   };
 
   const handleEditQuote = (quoteId: string) => {
     setSelectedQuoteId(quoteId);
-    setModalOpened(true);
     setIsEditing(true);
+    setModalOpened(true);
   };
+
+  const handleCreateQuote = () => {
+    // This would typically open a new form/modal for creating a quote
+    // For now, we'll show a notification as a placeholder.
+    notifications.show({
+      title: 'Feature Coming Soon',
+      message: 'Quote creation form is not yet implemented.',
+      color: 'blue',
+    });
+  };
+
+  const handleDeleteQuote = (quoteId: string, proposalNumber: string) => {
+    modals.openConfirmModal({
+      title: 'Disable Quote',
+      centered: true,
+      children: (
+        <Text size="sm">
+          Are you sure you want to disable quote <strong>#{proposalNumber}</strong>? This action cannot be undone.
+        </Text>
+      ),
+      labels: { confirm: 'Disable Quote', cancel: 'Cancel' },
+      confirmProps: { color: 'red' },
+      onConfirm: async () => {
+        try {
+          await apiClient.deleteQuote(quoteId);
+          notifications.show({
+            title: 'Success',
+            message: `Quote #${proposalNumber} has been disabled.`,
+            color: 'green',
+          });
+          fetchQuotes(); // Refresh the list
+        } catch (err) {
+          notifications.show({
+            title: 'Error',
+            message: 'Failed to disable the quote. Please try again.',
+            color: 'red',
+          });
+        }
+      },
+    });
+  };
+
 
   const handleCloseModal = () => {
     setModalOpened(false);
     setSelectedQuoteId(null);
     setIsEditing(false);
+    // Optionally refresh data when closing edit modal
+    if (isEditing) {
+        fetchQuotes();
+    }
   };
 
   const handleRefresh = () => {
@@ -97,35 +143,26 @@ const QuoteList: React.FC = () => {
     fetchQuotes();
   };
 
+  // --- Helper Functions (No changes) ---
   const formatCurrency = (amount: number | null | undefined): string => {
     if (amount === null || amount === undefined) return '$0.00';
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(Number(amount));
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(amount));
   };
-
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
   };
-
   const getStatusBadge = (status: number | null | undefined) => {
     const statusMap: { [key: number]: { label: string; color: string } } = {
-      0: { label: 'Draft', color: 'gray' },
-      1: { label: 'Pending', color: 'yellow' },
-      2: { label: 'Sent', color: 'blue' },
-      3: { label: 'Accepted', color: 'green' },
+      0: { label: 'Draft', color: 'gray' }, 1: { label: 'Pending', color: 'yellow' },
+      2: { label: 'Sent', color: 'blue' }, 3: { label: 'Accepted', color: 'green' },
       4: { label: 'Rejected', color: 'red' },
     };
-
     const statusInfo = statusMap[status ?? 0] || { label: 'Unknown', color: 'gray' };
     return <Badge color={statusInfo.color} size="sm" variant={isDark ? "light" : "filled"}>{statusInfo.label}</Badge>;
   };
-
   const filteredQuotes = quotes.filter(quote => {
     if (!debouncedSearch) return true;
-    
     const searchLower = debouncedSearch.toLowerCase();
     return (
       quote.Name?.toLowerCase().includes(searchLower) ||
@@ -134,245 +171,89 @@ const QuoteList: React.FC = () => {
       quote.ContactEmail?.toLowerCase().includes(searchLower)
     );
   });
+  // --- END Helper Functions ---
 
   return (
     <Stack gap="lg">
       <Card 
-        shadow={isDark ? "md" : "sm"} 
-        padding="lg" 
-        radius="md" 
-        withBorder
-        style={{
-          backgroundColor: isDark ? 'var(--mantine-color-dark-6)' : 'white',
-          borderColor: isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-3)',
-        }}
+        shadow={isDark ? "md" : "sm"} padding="lg" radius="md" withBorder
+        style={{ backgroundColor: isDark ? 'var(--mantine-color-dark-6)' : 'white' }}
       >
         <Group justify="space-between" mb="md">
-          <Title 
-            order={2}
-            style={{ 
-              color: isDark ? 'var(--mantine-color-gray-1)' : 'var(--mantine-color-gray-9)' 
-            }}
-          >
-            Quote Management
-          </Title>
+          <Title order={2}>Quote Management</Title>
           <Group>
             <TextInput
-              placeholder="Search quotes..."
-              value={searchQuery}
+              placeholder="Search quotes..." value={searchQuery}
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
-              leftSection={<IconSearch size={16} />}
-              style={{ width: 300 }}
-              styles={{
-                input: {
-                  backgroundColor: isDark ? 'var(--mantine-color-dark-7)' : 'white',
-                  borderColor: isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-4)',
-                  color: isDark ? 'var(--mantine-color-gray-1)' : 'var(--mantine-color-gray-9)',
-                  '&::placeholder': {
-                    color: isDark ? 'var(--mantine-color-gray-5)' : 'var(--mantine-color-gray-5)',
-                  }
-                }
-              }}
+              leftSection={<IconSearch size={16} />} style={{ width: 300 }}
             />
             <Tooltip label="Refresh">
-              <ActionIcon 
-                variant="light" 
-                onClick={handleRefresh}
-                loading={loading}
-              >
+              <ActionIcon variant="light" onClick={handleRefresh} loading={loading}>
                 <IconRefresh size={16} />
               </ActionIcon>
             </Tooltip>
+            <Button leftSection={<IconPlus size={16} />} onClick={handleCreateQuote}>
+                Create Quote
+            </Button>
           </Group>
         </Group>
 
         <Group justify="space-between" mb="md">
-          <Text 
-            c={isDark ? "dimmed" : "dimmed"}
-            style={{ 
-              color: isDark ? 'var(--mantine-color-gray-5)' : 'var(--mantine-color-gray-6)' 
-            }}
-          >
+          <Text c={isDark ? "dimmed" : "dimmed"}>
             Showing {filteredQuotes.length} of {totalQuotes} quotes
           </Text>
         </Group>
 
         {error && (
-          <Alert 
-            icon={<IconAlertCircle size={16} />} 
-            title="Error" 
-            color="red" 
-            mb="md"
-          >
+          <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red" mb="md">
             {error}
-            <Button 
-              size="xs" 
-              variant="light" 
-              onClick={handleRefresh} 
-              mt="xs"
-            >
-              Try Again
-            </Button>
+            <Button size="xs" variant="light" onClick={handleRefresh} mt="xs">Try Again</Button>
           </Alert>
         )}
 
         <div style={{ position: 'relative', minHeight: '400px' }}>
           <LoadingOverlay visible={loading} />
           
-          <Table 
-            striped={!isDark} 
-            highlightOnHover
-            style={{
-              backgroundColor: isDark ? 'var(--mantine-color-dark-6)' : 'white',
-            }}
-          >
+          <Table striped={!isDark} highlightOnHover>
             <Table.Thead>
-              <Table.Tr 
-                style={{
-                  backgroundColor: isDark ? 'var(--mantine-color-dark-7)' : 'var(--mantine-color-gray-0)',
-                }}
-              >
-                <Table.Th style={{ color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-8)' }}>Proposal #</Table.Th>
-                <Table.Th style={{ color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-8)' }}>Customer</Table.Th>
-                <Table.Th style={{ color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-8)' }}>Quote Name</Table.Th>
-                <Table.Th style={{ color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-8)' }}>Contact</Table.Th>
-                <Table.Th style={{ color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-8)' }}>Status</Table.Th>
-                <Table.Th style={{ color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-8)' }}>Total</Table.Th>
-                <Table.Th style={{ color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-8)' }}>Created</Table.Th>
-                <Table.Th style={{ color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-8)' }}>Actions</Table.Th>
+              <Table.Tr style={{ backgroundColor: isDark ? 'var(--mantine-color-dark-7)' : 'var(--mantine-color-gray-0)' }}>
+                <Table.Th>Proposal #</Table.Th>
+                <Table.Th>Customer</Table.Th>
+                <Table.Th>Quote Name</Table.Th>
+                <Table.Th>Contact</Table.Th>
+                <Table.Th>Status</Table.Th>
+                <Table.Th>Total</Table.Th>
+                <Table.Th>Created</Table.Th>
+                <Table.Th>Actions</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {filteredQuotes.length === 0 ? (
                 <Table.Tr>
-                  <Table.Td colSpan={7}>
-                    <Text 
-                      ta="center" 
-                      py="xl"
-                      style={{ 
-                        color: isDark ? 'var(--mantine-color-gray-5)' : 'var(--mantine-color-gray-6)' 
-                      }}
-                    >
-                      {loading ? 'Loading quotes...' : 'No quotes found'}
-                    </Text>
-                  </Table.Td>
+                  <Table.Td colSpan={8}><Text ta="center" py="xl">{loading ? 'Loading...' : 'No quotes found'}</Text></Table.Td>
                 </Table.Tr>
               ) : (
                 filteredQuotes.map((quote) => (
-                  <Table.Tr 
-                    key={quote.ID}
-                    style={{
-                      backgroundColor: isDark ? 'var(--mantine-color-dark-6)' : 'white',
-                      '&:hover': {
-                        backgroundColor: isDark ? 'var(--mantine-color-dark-5)' : 'var(--mantine-color-gray-0)',
-                      }
-                    }}
-                  >
-                    <Table.Td>
-                      <Text size="sm" fw={600} c="blue">
-                        #{quote.ProposalNumber}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text 
-                        size="sm" 
-                        lineClamp={2}
-                        style={{ 
-                          color: isDark ? 'var(--mantine-color-gray-1)' : 'var(--mantine-color-gray-9)' 
-                        }}
-                      >
-                        {quote.CustomerId || quote.CustomerName || 'N/A'}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text 
-                        size="sm" 
-                        lineClamp={2}
-                        style={{ 
-                          color: isDark ? 'var(--mantine-color-gray-1)' : 'var(--mantine-color-gray-9)' 
-                        }}
-                      >
-                        {quote.Name || 'Untitled Quote'}
-                      </Text>
-                    </Table.Td>
+                  <Table.Tr key={quote.ID}>
+                    <Table.Td><Text size="sm" fw={600} c="blue">#{quote.ProposalNumber}</Text></Table.Td>
+                    <Table.Td><Text size="sm">{quote.CustomerId || quote.CustomerName || 'N/A'}</Text></Table.Td>
+                    <Table.Td><Text size="sm" lineClamp={2}>{quote.Name || 'Untitled Quote'}</Text></Table.Td>
                     <Table.Td>
                       <Stack gap={2}>
-                        <Group gap={4} align="center">
-                          <IconUser size={12} color={isDark ? 'var(--mantine-color-gray-4)' : 'var(--mantine-color-gray-6)'} />
-                          <Text 
-                            size="xs"
-                            style={{ 
-                              color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-8)' 
-                            }}
-                          >
-                            {quote.ContactName || 'N/A'}
-                          </Text>
-                        </Group>
-                        {quote.ContactEmail && (
-                          <Group gap={4} align="center">
-                            <IconMail size={12} color={isDark ? 'var(--mantine-color-gray-4)' : 'var(--mantine-color-gray-6)'} />
-                            <Text 
-                              size="xs" 
-                              style={{ 
-                                color: isDark ? 'var(--mantine-color-gray-4)' : 'var(--mantine-color-gray-6)' 
-                              }}
-                            >
-                              {quote.ContactEmail}
-                            </Text>
-                          </Group>
-                        )}
+                        <Group gap={4}><IconUser size={12} /><Text size="xs">{quote.ContactName || 'N/A'}</Text></Group>
+                        {quote.ContactEmail && <Group gap={4}><IconMail size={12} /><Text size="xs">{quote.ContactEmail}</Text></Group>}
                       </Stack>
                     </Table.Td>
+                    <Table.Td>{getStatusBadge(quote.Status)}</Table.Td>
+                    <Table.Td><Text size="sm" fw={600}>{formatCurrency(quote.QuoteTotal)}</Text></Table.Td>
                     <Table.Td>
-                      {getStatusBadge(quote.Status)}
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size="sm" fw={600}>
-                        {formatCurrency(quote.QuoteTotal)}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Group gap={4} align="center">
-                        <IconCalendar size={12} color={isDark ? 'var(--mantine-color-gray-4)' : 'var(--mantine-color-gray-6)'} />
-                        <Text 
-                          size="xs"
-                          style={{ 
-                            color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-8)' 
-                          }}
-                        >
-                          {formatDate(quote.CreatedAt)}
-                        </Text>
-                      </Group>
+                      <Group gap={4}><IconCalendar size={12} /><Text size="xs">{formatDate(quote.CreatedAt)}</Text></Group>
                     </Table.Td>
                     <Table.Td>
                       <Group gap="xs">
-                        <Tooltip label="View Details">
-                          <ActionIcon
-                            variant="light"
-                            color="blue"
-                            onClick={() => handleViewQuote(quote.ID)}
-                          >
-                            <IconEye size={16} />
-                          </ActionIcon>
-                        </Tooltip>
-                        <Tooltip label="Edit Details">
-                          <ActionIcon
-                            variant="light"
-                            color="green"
-                            onClick={() => handleEditQuote(quote.ID)}
-                          >
-                            <IconEdit size={16} />
-                          </ActionIcon>
-                        </Tooltip>
-                        <Tooltip label="Disable Quote">
-                          <ActionIcon
-                            variant="light"
-                            color="red"
-                            // onClick={() => handleDisableQuote(quote.ID)}
-                          >
-                            <IconTrash size={16} />
-                          </ActionIcon>
-                        </Tooltip>
+                        <Tooltip label="View Details"><ActionIcon variant="light" color="blue" onClick={() => handleViewQuote(quote.ID)}><IconEye size={16} /></ActionIcon></Tooltip>
+                        <Tooltip label="Edit Details"><ActionIcon variant="light" color="green" onClick={() => handleEditQuote(quote.ID)}><IconEdit size={16} /></ActionIcon></Tooltip>
+                        <Tooltip label="Disable Quote"><ActionIcon variant="light" color="red" onClick={() => handleDeleteQuote(quote.ID, quote.ProposalNumber)}><IconTrash size={16} /></ActionIcon></Tooltip>
                       </Group>
                     </Table.Td>
                   </Table.Tr>
@@ -382,15 +263,7 @@ const QuoteList: React.FC = () => {
           </Table>
 
           {totalPages > 1 && (
-            <Group justify="center" mt="lg">
-              <Pagination
-                value={currentPage}
-                onChange={setCurrentPage}
-                total={totalPages}
-                size="sm"
-                withEdges
-              />
-            </Group>
+            <Group justify="center" mt="lg"><Pagination value={currentPage} onChange={setCurrentPage} total={totalPages} /></Group>
           )}
         </div>
       </Card>
